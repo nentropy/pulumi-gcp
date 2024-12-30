@@ -1,0 +1,92 @@
+# project_config.yml
+
+# Project-wide settings
+project:
+  name: roai
+  description: "ROAI AI Governance Platform"
+  environments:
+    - name: dev
+      project_id: roai-dev
+      domain: dev.roai.dev
+    - name: prod 
+      project_id: roai-prod
+      domain: roai.dev
+  
+  # Regional configuration
+  regions:
+    primary: australia-southeast2
+    failover: asia-southeast1
+
+# Component definitions with dependencies and settings
+components:
+  - name: core
+    description: "Core infrastructure components"
+    enabled: true
+    order: 1
+    includes:
+      - project_setup
+      - service_accounts
+      - networking_base
+    
+  - name: networking
+    description: "Network infrastructure including DNS and API Gateway"
+    enabled: true
+    order: 2
+    depends_on: 
+      - core
+    includes:
+      - dns_zone
+      - api_gateway
+      - load_balancer
+      - ssl_certificates
+    
+  - name: security
+    description: "Security configurations and IAM policies"
+    enabled: true
+    order: 3
+    depends_on:
+      - core
+      - networking
+    includes:
+      - iam_policies
+      - secret_manager
+      - kms
+
+  - name: monitoring
+    description: "Monitoring, logging, and alerting"
+    enabled: true
+    order: 4
+    includes:
+      - monitoring_setup
+      - budget_alerts
+      - cost_analysis
+
+# Service-specific configurations
+services:
+  api_gateway:
+    spec_version: "2.0"
+    endpoints:
+      - path: /v1/governance/assessment
+        method: POST
+        backend: cloud_run
+  
+  dns:
+    zone_name: roai-zone
+    ttl_settings:
+      default: 300
+      mx_records: 3600
+    
+  monitoring:
+    budget:
+      currency: AUD
+      limits:
+        dev: 1000
+        prod: 5000
+    alert_email: alerts@roai.dev
+    
+  security:
+    service_accounts:
+      - name: api-gateway
+        description: "API Gateway Service Account"
+      - name: monitoring
+        description: "Monitoring Service Account"
